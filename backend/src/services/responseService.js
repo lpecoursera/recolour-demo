@@ -5,7 +5,7 @@ export const ResponseService = {
 
     ifNotExistResponse(res, entity) {
         if (!entity) {
-            res.status(404).json({ result: false, error: 'Not found' });
+            res.status(404).json({ success: false, error: 'Not found' });
             return true;
         }
         return false;
@@ -13,7 +13,7 @@ export const ResponseService = {
 
     ifNotAllowedResponse(req, res, entity, actionKey) {
         if (!isAllowedAction(req.user, entity, actionKey)) {
-            res.status(403).json({ result: false, error: 'No permission' });
+            res.status(403).json({ success: false, error: 'No permission' });
             return true;
         }
         return false;
@@ -24,11 +24,11 @@ export const ResponseService = {
     },
 
     okResponse(res, data) {
-        return res.status(200).json({ result: true, data: data });
+        return res.status(200).json({ success: true, data: data });
     },
 
     okResponseNoData(res) {
-        return res.status(200).json({ result: true });
+        return res.status(200).json({ success: true });
     },
 
     singleResponse(req, res, entity) {

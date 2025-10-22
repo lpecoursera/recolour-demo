@@ -1,14 +1,14 @@
 <template>
-  <div class="flex justify-center items-center h-screen bg-gray-100">
+  <div class="login-page">
     <!-- Login box -->
-    <div class="bg-white p-8 rounded-2xl shadow-md w-96">
-      <h2 class="text-2xl font-semibold mb-2 text-center">Login</h2>
-      <p class="text-sm text-gray-500 mb-6 text-center">
+    <div class="login-box">
+      <h2 class="login-title">Login</h2>
+      <p class="login-subtitle">
         Demo login — select a user to enter
       </p>
 
-      <form @submit.prevent="handleLogin" class="w-full">
-        <div class="mb-4">
+      <form @submit.prevent="handleLogin" class="login-form">
+        <div class="form-field">
           <FormSelect
             v-model="email"
             label="Email"
@@ -21,14 +21,11 @@
           />
         </div>
 
-        <button
-          type="submit"
-          class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md transition-colors"
-        >
+        <button type="submit" class="login-button">
           Login
         </button>
 
-        <p v-if="error" class="text-red-500 text-sm mt-3 text-center">{{ error }}</p>
+        <p v-if="error" class="login-error">{{ error }}</p>
       </form>
     </div>
   </div>
@@ -52,3 +49,37 @@ async function handleLogin() {
   }
 }
 </script>
+
+<style scoped lang="postcss">
+.login-page {
+  @apply flex justify-center items-center h-screen bg-gray-100;
+}
+
+.login-box {
+  @apply bg-white p-8 rounded-2xl shadow-md w-96;
+}
+
+.login-title {
+  @apply text-2xl font-semibold mb-2 text-center;
+}
+
+.login-subtitle {
+  @apply text-sm text-gray-500 mb-6 text-center;
+}
+
+.login-form {
+  @apply w-full;
+}
+
+.form-field {
+  @apply mb-4;
+}
+
+.login-button {
+  @apply w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md transition-colors;
+}
+
+.login-error {
+  @apply text-red-500 text-sm mt-3 text-center;
+}
+</style>

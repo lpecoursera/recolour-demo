@@ -1,12 +1,11 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { getSocket } from '../socket'
-import { useAuthStore } from '../stores/auth.ts'
+import { apiFetch } from '../api/client.ts'
 import { useUiStore } from '../stores/useUiStore.ts'
 import type { Ticket } from '../type/Ticket.ts'
 
 export const useTicketStore = defineStore('tickets', () => {
-    const auth = useAuthStore();
     const uiStore = useUiStore()
 
     const tickets = ref<Ticket[]>([]);
@@ -22,18 +21,9 @@ export const useTicketStore = defineStore('tickets', () => {
     // Fetch all tickets from backend
     async function initTickets(): Promise<void> {
         try {
-            const res = await fetch('http://localhost:3000/api/tickets', {
-                headers: { 'X-User-Id': auth.token || '' },
-            });
-            if (res.ok) {
-                const response = await res.json();
-                if (response.result === true && response.data) {
-                    tickets.value = response.data;
-                }
-            } else {
-                if (res.status === 404) throw new Error('404, Not found');
-                if (res.status === 500) throw new Error('500, internal server error');
-                throw new Error(`${res.status}`);
+            const resultTickets = await apiFetch<Ticket[]>('/tickets');
+            if (resultTickets) {
+                tickets.value = resultTickets;
             }
         } catch (error) {
             console.error('initTickets', error);
@@ -48,20 +38,12 @@ export const useTicketStore = defineStore('tickets', () => {
     // Save a new ticket
     async function saveTicket(ticket: Ticket): Promise<void> {
         try {
-            const res = await fetch('http://localhost:3000/api/tickets', {
+            const resultTicket = await apiFetch<Ticket>('/tickets', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-User-Id': auth.token || '' },
-                body: JSON.stringify(ticket),
+                body: JSON.stringify(ticket)
             });
-            if (res.ok) {
-                const response = await res.json();
-                if (response.result === true && response.data) {
-                    _addOrUpdateTicket(response.data);
-                }
-            } else {
-                if (res.status === 404) throw new Error('404, Not found');
-                if (res.status === 500) throw new Error('500, internal server error');
-                throw new Error(`${res.status}`);
+            if (resultTicket) {
+                _addOrUpdateTicket(resultTicket);
             }
         } catch (error) {
             console.error('saveTicket', error);
@@ -69,22 +51,14 @@ export const useTicketStore = defineStore('tickets', () => {
     }
 
     // Update an existing ticket
-    async function updateTicket(id: string, update: Partial<Ticket>) {
+    async function updateTicket(id: string, partialTicket: Partial<Ticket>) {
         try {
-            const res = await fetch(`http://localhost:3000/api/tickets/${id}`, {
+            const resultTicket = await apiFetch<Ticket>(`/tickets/${id}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'X-User-Id': auth.token || '' },
-                body: JSON.stringify(update),
+                body: JSON.stringify(partialTicket)
             });
-            if (res.ok) {
-                const response = await res.json();
-                if (response.result === true && response.data) {
-                    _addOrUpdateTicket(response.data);
-                }
-            } else {
-                if (res.status === 404) throw new Error('404, Not found');
-                if (res.status === 500) throw new Error('500, internal server error');
-                throw new Error(`${res.status}`);
+            if (resultTicket) {
+                _addOrUpdateTicket(resultTicket);
             }
         } catch (error) {
             console.error('updateTicket', error);
@@ -94,26 +68,14 @@ export const useTicketStore = defineStore('tickets', () => {
     // Ticket action (workflow)
     async function ticketAction(id: string, actionKey: string, data?: Record<string, any>[]) {
         try {
-            const res = await fetch(`http://localhost:3000/api/tickets/${id}/actions`, {
+            const resultTicket = await apiFetch<Ticket>(`/tickets/${id}/actions`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'X-User-Id': auth.token || '' },
-                body: JSON.stringify({ actionKey: actionKey, payload: data }),
-            })
-            if (res.ok) {
-                const response = await res.json();
-                if (response.result === true && response.data) {
-                    _addOrUpdateTicket(response.data);
-                } else if (response.result === false && response.error) {
-                    console.log("!!! Got an error. Confirm");
-                    uiStore.confirm(response.error);
-                }
-            } else {
-                if (res.status === 404) throw new Error('404, Not found');
-                if (res.status === 500) throw new Error('500, internal server error');
-                throw new Error(`${res.status}`);
+                body: JSON.stringify({ actionKey: actionKey, payload: data })
+            });
+            if (resultTicket) {
+                _addOrUpdateTicket(resultTicket);
             }
         } catch (error) {
-            console.error('ticketAction', error);
             uiStore.confirm({
                 title: "Error doing this action",
                 message: "There was a problem handling the requested action",
@@ -124,17 +86,11 @@ export const useTicketStore = defineStore('tickets', () => {
     // Delete a ticket
     async function deleteTicket(id: string) {
         try {
-            const res = await fetch(`http://localhost:3000/api/tickets/${id}`, {
+            await apiFetch(`/tickets/${id}`, {
                 method: 'DELETE',
-                headers: { 'X-User-Id': auth.token || '' },
+                parseJson: false
             });
-            if (res.ok) {
-                _RemoveTicket(id);
-            } else {
-                if (res.status === 404) throw new Error('404, Not found');
-                if (res.status === 500) throw new Error('500, internal server error');
-                throw new Error(`${res.status}`);
-            }
+            _RemoveTicket(id);
         } catch (error) {
             console.error('deleteTicket', error);
         }

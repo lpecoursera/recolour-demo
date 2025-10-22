@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { useAuthStore } from './auth.ts'
+import { apiFetch } from '../api/client.ts'
 import { useUserStore } from './userStore.ts'
 import type { Status } from '../type/Status.ts'
 import type { Action, OptionResolver } from '../type/Action.ts'
@@ -10,7 +10,6 @@ export const useModelDataStore = defineStore('modelData', () => {
     const statusesByKey = ref<Record<string, Status>>({})
     const actions = ref<Record<string, Action>>({})
 
-    const auth = useAuthStore();
     const userStore = useUserStore();
 
     const optionResolvers: Record<string, OptionResolver> = {
@@ -21,14 +20,14 @@ export const useModelDataStore = defineStore('modelData', () => {
             })),
     };
 
-    // Fetch all tickets from backend
+    // Fetch statuses and action definitions from backend
     async function initModelData() {
         try {
-            const statusRes = await fetch('http://localhost:3000/api/modeldata/statuses', {
-                headers: { 'X-User-Id': auth.token || '' },
+            const statusRes = await apiFetch<any>('/modeldata/statuses', {
+                parseJson: false
             });
-            const actionRes = await fetch('http://localhost:3000/api/modeldata/actions', {
-                headers: { 'X-User-Id': auth.token || '' },
+            const actionRes = await apiFetch<any>('/modeldata/actions', {
+                parseJson: false
             });
             if (statusRes.ok && actionRes) {
                 const statusResponse = await statusRes.json();

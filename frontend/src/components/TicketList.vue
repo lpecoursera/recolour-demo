@@ -1,9 +1,10 @@
 <template>
-  <section class="flex-1 p-6 overflow-auto">
-    <div v-if="tickets.length==0">
+  <section class="ticket-list-section">
+    <div v-if="tickets.length==0" class="empty-list">
       No items in the list
     </div>
-    <div class="grid gap-4">
+
+    <div class="ticket-grid">
       <BaseCard v-for="ticket in tickets" :key="ticket.id" fullWidth>
         <CardRow>
           <template #content>
@@ -41,23 +42,27 @@
                 <dd class="wrap">{{ ticket.rejectComment }}</dd>
               </template>
             </dl>
-            <p class="mt-4 mb-4 border-t border-gray-200 text-gray-500 text-sm"></p>
-            <div class="flex flex-row gap-2 flex-wrap">
-              <div v-for="photoId in ticket.photoIds" :key="photoId">
-                <img class="ticket-photo" :src="`http://localhost:3000/photos/${ticket.folder}/${photoId}.jpg`" />
-                <div class="text-xs">{{"&nbsp;&nbsp;" + getPhotoLabel(photoId)}}</div>
+
+            <p class="ticket-divider"></p>
+
+            <div class="ticket-photos">
+              <div v-for="photoId in ticket.photoIds" :key="photoId" class="ticket-photo-wrapper">
+                <img class="ticket-photo" :src="`${IMAGE_BASE_URL}/photos/${ticket.folder}/${photoId}.jpg`" />
+                <div class="ticket-photo-label">{{"&nbsp;&nbsp;" + getPhotoLabel(photoId)}}</div>
               </div>
-              </div>
-            <p class="ticket-guide text-gray-500 text-sm">{{ ticket.guide }}</p>
+            </div>
+
+            <p class="ticket-guide">{{ ticket.guide }}</p>
           </template>
+
           <template #actions>
             <template v-for="actionRec in modelData.actions">
               <ActionButton 
-              v-if="includeAction(ticket, actionRec)" 
-              :variant="actionRec.key === 'delete' ? 'danger' : 'outline'"
-              :ticket="ticket" 
-              :actionKey="actionRec.key"
-              @doaction="doaction" />
+                v-if="includeAction(ticket, actionRec)" 
+                :variant="actionRec.key === 'delete' ? 'danger' : 'outline'"
+                :ticket="ticket" 
+                :actionKey="actionRec.key"
+                @doaction="doaction" />
             </template>
           </template>
         </CardRow>
@@ -67,15 +72,12 @@
 </template>
 
 <script setup lang="ts">
-
-defineProps<{
-  tickets: Ticket[]
-}>()
-
+// (Unchanged)
+defineProps<{ tickets: Ticket[] }>()
+import { IMAGE_BASE_URL } from '../config.ts'
 import { useModelDataStore } from '../stores/modelDataStore.ts'
 import { useTicketStore } from '../stores/ticketStore.ts'
 import { useUserStore } from '../stores/userStore.ts'
-
 import type { Ticket } from '../type/Ticket.ts'
 import BaseCard from '../components/BaseCard.vue'
 import CardRow from '../components/CardRow.vue'
@@ -87,27 +89,35 @@ const ticketStore = useTicketStore()
 const userStore = useUserStore()
 
 function getPhotoLabel(photoId: string) {
-  const photoParts = photoId.split('_');
-  return photoParts[2] ? photoParts[2] : photoParts[0];
+  const photoParts = photoId.split('_')
+  return photoParts[2] ? photoParts[2] : photoParts[0]
 }
 
 function includeAction(ticket: Ticket, actionRec: Record<string, any>): boolean {
-  if (!ticket?.actions) {
-    console.warn(`Action info is missing on ticket ${ticket?.id}`);
-    return false;
-  }
-  if (actionRec.key === "View" || actionRec.key === "Edit") {
-    return false; // TODO: These must be handled later
-  }
-  return (ticket.actions.includes(actionRec.key));
+  if (!ticket?.actions) return false
+  if (actionRec.key === "View" || actionRec.key === "Edit") return false
+  return ticket.actions.includes(actionRec.key)
 }
 
 async function doaction(entityId: string, actionKey: string, data?: Record<string, any>[]) {
-  await ticketStore.ticketAction(entityId, actionKey, data);
+  await ticketStore.ticketAction(entityId, actionKey, data)
 }
 </script>
 
 <style scoped lang="postcss">
+.ticket-list-section {
+  @apply flex-1 p-6 overflow-auto;
+}
+
+.empty-list {
+  @apply text-gray-500 text-sm;
+}
+
+.ticket-grid {
+  @apply grid gap-4;
+}
+
+/* Info list styling */
 .info-list {
   @apply grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 text-sm;
 }
@@ -123,19 +133,39 @@ async function doaction(entityId: string, actionKey: string, data?: Record<strin
 .info-list dd.wrap {
   @apply text-gray-900 break-words whitespace-pre-wrap;
 }
+
+/* Divider line */
+.ticket-divider {
+  @apply mt-4 mb-4 border-t border-gray-200 text-gray-500 text-sm;
+}
+
+/* Photos container */
+.ticket-photos {
+  @apply flex flex-row gap-2 flex-wrap;
+}
+
+.ticket-photo-wrapper {
+  @apply flex flex-col items-center;
+}
+
+.ticket-photo {
+  @apply h-12; /* 50px approx */
+}
+
+.ticket-photo-label {
+  @apply text-xs text-center;
+}
+
+/* Guide text */
+.ticket-guide {
+  @apply text-gray-500 text-sm whitespace-pre-line;
+}
+
+/* Button base styling (if used here) */
 .base-button {
   @apply rounded-md font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-300;
   min-width: 6.5rem;
   text-align: center;
   white-space: nowrap;
-}
-</style>
-
-<style scoped>
-.ticket-guide {
-  white-space: pre-line;
-}
-.ticket-photo {
-  height: 50px;
 }
 </style>

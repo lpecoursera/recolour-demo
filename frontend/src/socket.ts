@@ -1,5 +1,6 @@
 // socket.ts
 import { io, Socket } from 'socket.io-client'
+import { SOCKET_BASE_URL } from './config.ts'
 import type { Ticket } from './type/Ticket'
 import type { User } from './type/User'
 
@@ -33,7 +34,7 @@ let socket: Socket<ServerToClientEvents, ClientToServerEvents> | null = null
 export function connectSocket(userId: string) {
     if (socket) return socket
 
-    socket = io('http://localhost:3000', {
+    socket = io(SOCKET_BASE_URL, {
         auth: { userId },
         transports: ['websocket'],
     })
